@@ -1,0 +1,38 @@
+{
+	"name": "audiobus-output-opendaw-vaporisateur",
+	"version": "0.1.0",
+	"description": "openDAW's Vaporisateur synthesiser as an audiobus instrument and output",
+	"type": "module",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/designerzen/audiobus-output-opendaw-vaporisateur.git"
+	},
+	"main": "index.ts",
+	"types": "index.ts",
+	"exports": {
+		".": "./index.ts",
+		"./instrument": "./opendaw-vaporisateur.ts",
+		"./engine": "./vaporisateur-engine.ts",
+		"./vite": "./opendaw-files.js"
+	},
+	"sideEffects": false,
+	"scripts": {
+		"type-check": "tsc --noEmit"
+	},
+	"files": [
+		"*.ts",
+		"*.js"
+	],
+	"dependencies": {
+		"@ffmpeg/ffmpeg": "^0.12.15",
+		"@ffmpeg/util": "^0.12.2",
+		"@opendaw/lib-dom": "0.0.77",
+		"@opendaw/lib-dsp": "0.0.77",
+		"@opendaw/lib-midi": "0.0.59",
+		"@opendaw/studio-adapters": "0.0.99",
+		"@opendaw/studio-core": "0.0.126"
+	},
+	"devDependencies": {
+		"typescript": "~5.9.3"
+	}
+}

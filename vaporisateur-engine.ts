@@ -17,6 +17,9 @@ export interface VaporisateurEngine {
 	dispose(): void
 }
 
+/** Vite's base URL when bundled with Vite, otherwise the site root. */
+const baseUrl = (): string => (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/"
+
 const worklets = new WeakMap<BaseAudioContext, Promise<AudioWorklets>>()
 let engineCount = 0
 
@@ -34,7 +37,7 @@ export async function createVaporisateurEngine(
 	}
 	let loading = worklets.get(context)
 	if (!loading) {
-		AudioWorklets.install(`${import.meta.env.BASE_URL}opendaw/processors.js`)
+		AudioWorklets.install(options.processorsUrl ?? `${baseUrl()}opendaw/processors.js`)
 		loading = AudioWorklets.createFor(context)
 		worklets.set(context, loading)
 		loading.catch(() => worklets.delete(context))
@@ -96,7 +99,7 @@ export async function createVaporisateurEngine(
 			})
 			.unwrap("Could not create Vaporisateur")
 		engine = project.startAudioWorklet()
-		// Project.startAudioWorklet connects to the destination; Harmoneasy owns routing.
+		// Project.startAudioWorklet connects to the destination; the host owns routing.
 		engine.disconnect()
 		if (engineCount++ === 0) {
 			AnimationFrame.start(window)

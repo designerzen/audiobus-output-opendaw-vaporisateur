@@ -1,7 +1,11 @@
-import { engineGain } from "../engine-levels"
-import type { IAudioOutput } from "../../io/outputs/output-interface.ts"
-import { velocityToGain } from "../../conversion/velocity-to-gain.ts"
 import { createVaporisateurEngine, type VaporisateurEngine } from "./vaporisateur-engine.ts"
+
+/** Output trim (+12 dB) that matches Vaporisateur's loudness to audiobus's other engines. */
+export const VAPORISATEUR_TRIM = 10 ** (12 / 20)
+
+/** Convert MIDI velocity (0–127) to a bounded linear amplitude. */
+const velocityToGain = (velocity: number): number =>
+	Number.isFinite(velocity) ? Math.max(0, Math.min(127, velocity)) / 127 : 0
 
 export interface VaporisateurOptions {
 	title?: string
@@ -12,17 +16,19 @@ export interface VaporisateurOptions {
 	release?: number
 	filterCutOff?: number
 	filterResonance?: number
+	/** URL of openDAW's processors.js; defaults to "<base>opendaw/processors.js". */
+	processorsUrl?: string
 	slideDuration?: number
 	fadeDuration?: number
 	oscillator?: { type: "sine" | "triangle" | "sawtooth" | "square" }
 }
 
-/** OpenDAW's polyphonic subtractive synth, routed through Harmoneasy's mixer. */
-export default class OpenDAWVaporisateur implements IAudioOutput {
+/** OpenDAW's polyphonic subtractive synth; implements audiobus's IAudioOutput. */
+export default class OpenDAWVaporisateur {
 	static ID = 0
 	readonly uuid = `OpenDAWVaporisateur-${OpenDAWVaporisateur.ID++}`
-	readonly options: Required<Omit<VaporisateurOptions, "title">> &
-		Pick<VaporisateurOptions, "title">
+	readonly options: Required<Omit<VaporisateurOptions, "title" | "processorsUrl">> &
+		Pick<VaporisateurOptions, "title" | "processorsUrl">
 	readonly output: GainNode
 	readonly requiresConnectionControl = false
 	readonly activeNotes = new Set<number>()
@@ -49,7 +55,7 @@ export default class OpenDAWVaporisateur implements IAudioOutput {
 			...options
 		}
 		this.output = audioContext.createGain()
-		this.output.gain.value = this.options.gain * engineGain("opendaw-vaporisateur")
+		this.output.gain.value = this.options.gain * VAPORISATEUR_TRIM
 	}
 
 	get name() {
@@ -83,7 +89,7 @@ export default class OpenDAWVaporisateur implements IAudioOutput {
 		this.options.gain = Math.max(0, value)
 		this.output.gain.cancelScheduledValues(this.now)
 		this.output.gain.setTargetAtTime(
-			this.options.gain * engineGain("opendaw-vaporisateur"),
+			this.options.gain * VAPORISATEUR_TRIM,
 			this.now,
 			Math.max(0.001, this.options.fadeDuration)
 		)
